@@ -1,2 +1,1 @@
-web: gunicorn gettingstarted.wsgi
-web: gunicorn application:initiativeTracker
+web:gunicorn application:initiativeTracker
