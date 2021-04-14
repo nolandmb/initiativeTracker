@@ -1,6 +1,7 @@
 import psycopg2
 import os
 
+from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_session import Session
 from tempfile import mkdtemp
@@ -11,10 +12,17 @@ from extras import *
 
 
 app = Flask(__name__)
-
-app.config['SECRET_KEY'] = os.urandom(24)
-DATABASE_URL = os.environ['postgres://anctbzerrlzppo:ca85a0ee5d5abe285fb04ccc64dbe17434d64d1eeb36cbff1170e181f477d3b8@ec2-18-206-20-102.compute-1.amazonaws.com:5432/ddccsfovmshpcv']
-db = psycopg2.connect(DATABASE_URL, sslmode='require')
+app.config["DEBUG"] = True
+SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
+    username="nolandmb",
+    password="Neededapassword",
+    hostname="nolandmb.mysql.pythonanywhere-services.com",
+    databasename="nolandmn$combat",
+)
+app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
 cur = db.cursor()
 
 
