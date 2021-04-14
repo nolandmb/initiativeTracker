@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1, width=device-width">
+        <meta name="author" content="Marc Noland">
+        <meta name="description" content="Initative Tracker for TTRPG. images from pixabay.com">
+        <meta name="keywords" content="D&D, RPG, Gaming, TTRPG">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+
+        <link href="/static/styles.css" rel="stylesheet">
+
+        <script>
+        var intModifier;
+        var round = 1;
+        var turn = 0;
+        var characterSpecs = [];
+
+        document.addEventListener('DOMContentLoaded',function() {
+          roundText.innerHTML= round;
+          });
+
+
+        //add rows
+        function addRow() {
+            var initiativeTable = document.getElementById('initiativeTable');
+            var rowCount = initiativeTable.rows.length;
+            var tr = initiativeTable.insertRow(rowCount);
+            var characterSelection = document.getElementById('combatants');
+            var activeOption = characterSelection.options[characterSelection.selectedIndex].value;
+            var characterAdded;
+
+
+            //adds character name from the dropdown
+            for (var i =0; i < rowCount; i++){
+                if (characterSpecs[i][0] == activeOption){
+                    intModifier = characterSpecs[i][1];
+                    characterAdded = characterSpecs[i][0];
+                    break;
+                }
+
+            }
+            //add cells to the row
+
+            var td = document.createElement('td');
+            td = tr.insertCell(0);
+            td.innerHTML = characterAdded;
+            td = tr.insertCell(1);
+            td.innerHTML = intModifier;
+            td = tr.insertCell(2);
+            td.innerHTML = intModifier;
+            td = tr.insertCell(3);
+            td.innerHTML = "None";
+            td = tr.insertCell(4);
+            td.innerHTML =  '<input type="button" value="Delete" onclick="deleteRow(this)">';
+            initiativeTable.appendChild(tr);
+            for (var j = 0; j <= rowCount; j++){
+                initiativeTable.rows[j].className = 'normal';
+                initiativeTable.appendChild(tr);
+            }
+
+            if (rowCount >= 2){
+                initiativeTable.rows[1].className = 'selected';
+                initiativeTable.appendChild(tr);
+            }
+
+
+
+        }
+        //function for deleteing rows of the initiative table
+        function deleteRow(r) {
+          var i = r.parentNode.parentNode.rowIndex;
+          document.getElementById("initiativeTable").deleteRow(i);
+        }
+
+        //activates the next player
+        function nextPlayer(){
+            var activeRow = document.getElementById("initiativeTable");
+            var rowCount = activeRow.rows.length;
+            //var node = document.documentElement.nodeName;
+
+            for (var i = 0; i < rowCount; i++){
+                if (i == (rowCount - 1) && activeRow.rows[i].className == "selected")
+                {
+                    activeRow.rows[i].className = "normal";
+                    activeRow.rows[1].className = "selected";
+                    round++;
+                    roundText.innerHTML= round;
+                    activeRow.appendChild();
+                }
+                else if (activeRow.rows[i].className == "selected"){
+                    activeRow.rows[i].className = "normal";
+                    activeRow.rows[(i + 1)].className = "selected";
+                    activeRow.appendChild();
+                }
+            }
+        }
+
+        //sets player condition
+        function addCondition()
+        {
+            var conditionSelection = document.getElementById('conditions');
+            var chosenOption = conditionSelection.options[conditionSelection.selectedIndex].value;
+            var initiativeTable = document.getElementById('initiativeTable');
+            var rowCount = initiativeTable.rows.length;
+
+            for (var i = 0; i <= rowCount; i++){
+                if (initiativeTable.rows[i].className == 'selected'){
+                    initiativeTable.rows[i].cells[3].innerHTML = chosenOption;
+                    initiativeTable.appendChild();
+                }
+            }
+
+
+        }
+
+        //rolls initiative and sorts table by initiative number auto activates first player
+        function rollInitiative(){
+            var currentRow = document.getElementById("initiativeTable");
+            var rowCount = currentRow.rows.length;
+            var getMod;
+            round = 1;
+            roundText.innerHTML= round;
+
+            //rolls initiative
+            for (var i = 1; i < rowCount; i++){
+                getMod = currentRow.rows[i].cells[1].innerHTML;
+                var x = Math.floor((Math.random() * 20) + 1);
+                y = parseInt(getMod);
+                y = y + x;
+                currentRow.rows[i].cells[2].innerHTML = y;
+                }
+
+            //sorts table by initative need some help with this part It was hard to figure out
+            //found some code on w3schools and modified it to work for this app
+
+            var table, rows, switching, i, x, y, shouldSwitch;
+              table = document.getElementById("initiativeTable");
+              switching = true;
+              /*Make a loop that will continue until
+              no switching has been done:*/
+              while (switching) {
+                //start by saying: no switching is done:
+                switching = false;
+                rows = table.rows;
+                /*Loop through all table rows (except the
+                first, which contains table headers):*/
+                for (i = 1; i < (rows.length - 1); i++) {
+                  //start by saying there should be no switching:
+                  shouldSwitch = false;
+                  /*Get the two elements you want to compare,
+                  one from current row and one from the next:*/
+                  x = table.rows[i].cells[2].innerHTML;
+                  y = table.rows[i+1].cells[2].innerHTML;
+                  var a = parseInt(x);
+                  var b = parseInt(y);
+                  //check if the two rows should switch place:
+                  if (a < b) {
+                    //if so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                  }
+                }
+                if (shouldSwitch) {
+                  /*If a switch has been marked, make the switch
+                  and mark that a switch has been done:*/
+                  rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                  switching = true;
+                }
+              }
+
+              for (var i = 1; i < rows.length; i++){
+                if ( currentRow.rows[i].className == "selected")
+                {
+                    currentRow.rows[i].className = "normal";
+                    currentRow.rows[1].className = "selected";
+                    table.appendChild();
+
+                     }
+
+                }
+        }
+
+
+
+       </script>
+
+        {% block head %}{% endblock %}
+
+        <title>{% block title %}{% endblock %}</title>
+
+    </head>
+
+    <body>
+
+
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <a class="navbar-brand" href="/"><img src="static/d20_nav_bar.png" width="50" height="50"> </a>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+            <div class="collapse navbar-collapse" id="navbar">
+                    {% if session.user_id %}
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/updateCharacter">Update Character</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/logout">Log Out</a></li>
+                    </ul>
+
+                    {% else %}
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/login">Log In</a></li>
+                    </ul>
+                    {% endif %}
+            </div>
+        </nav>
+
+
+        <main>
+            {% block main %}{% endblock %}
+        </main>
+
+        <footer>
+
+        </footer>
+
+    </body>
+
+</html>

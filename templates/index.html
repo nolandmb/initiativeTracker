@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+{% for key in characters %}
+<script type="text/javascript">
+
+       characterSpecs.push(["{{ key.name }}", "{{key.modifier}}"]);
+
+       </script>
+{% endfor %}
+
+
+Round:<p id="roundText"></p>
+<div class = "tableDiv">
+    <table class = initiative id=initiativeTable>
+     <thead>
+         <th>Character</th>
+         <th>Modifier</th>
+         <th>Initiative</th>
+         <th>Condition</th>
+
+     </thead>
+
+     <tbody>
+
+     </tbody>
+     </table>
+</div>
+<div class = "myDiv">
+       <!-- <form class = "myform"  method="POST">-->
+            <label for="combatants">Select a combatant:</label>
+            <select id="combatants" name="combatants">
+                <option selected>None</option>
+                {% for key in characters %}
+                <option value = "{{key.name}}">{{key.name}}</option>
+                {% endfor %}
+            </select>
+            <div class="form-group">
+                <button class="btn btn-primary" name = "combatantButton" onclick = "addRow();" type="submit">Add Combatant</button>
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-primary" name = "roll_initiative" onclick = "rollInitiative();" type="submit">Roll Initative</button>
+            </div>
+           <!-- </form>-->
+           <div>
+               <label for="conditions">Add a condition:</label>
+            <select id="conditions" name="conditions">
+                <option value = "None" selected>None</option>
+                <option value = "Blinded">Blinded</option>
+                <option value = "Charmed">Charmed</option>
+                <option value = "Deafened">Deafened</option>
+                <option value = "Frightened">Frightened</option>
+                <option value = "Grappled">Grappled</option>
+                <option value = "Invisible">Invisible</option>
+                <option value = "Paralyzed">Paralyzed</option>
+                <option value = "Petrified">Petrified</option>                >
+                <option value = "Dead">Dead</option>
+
+            </select>
+            <div class="form-group">
+                <button class="btn btn-primary" name = "conditionButton" onclick = "addCondition();" type="submit">Add Condition</button>
+            </div>
+           </div>
+           <div class="form-group">
+                <button class="btn btn-primary" name = "nextButton" onclick = "nextPlayer();" type="submit">Next Player</button>
+            </div>
+           <form class = "myform" action="/updateCharacter" method="POST">
+
+            <div class="form_group"><p>Add and remove players from the database:</p></div>
+            <div class="form-group">
+                <button class="btn btn-primary" name = "update_characters" onclick="location.href = 'updateCharacter.html';">Update Character Database</button>
+
+            </div>
+
+       </form>
+
+
+</div>
+
+
+
+
+{% endblock %}
