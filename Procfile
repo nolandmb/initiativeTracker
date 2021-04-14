@@ -1,1 +1,2 @@
-web:gunicorn application:initiativeTracker
+web:gunicorn application:app
+web:gunicorn initiativeTracker.wsgi
