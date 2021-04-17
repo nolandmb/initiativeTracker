@@ -10,3 +10,7 @@ The log in and register html files handle users. Log in lets and existing user l
 The index page is where most everything happens. Python is not used on this page for the initiative tracking. Javascript handles the dynamics of this page. The user can add and delete characters to the initiative list. They will be able to add a condition to the active player. Clicking roll initiative will generate a random number that is added to the characters modifier for a total initiative score. The table is then sorted from highest to lowest initiative score. The user can iterate through the players and it will highlight the active player. If the active player is the last player in the list clicking on the next player button will activate the first player in the list and increase the round by one.
 The sql database contains the users and characters information. The python code in the cs50 IDE is slightly different from the git hub and python anywhere code. Pythonanywhere used a differet SQL version so I had to change some syntax to make it work.
 
+project can be found at
+nolandmb.pythonanywhere.com
+
+
