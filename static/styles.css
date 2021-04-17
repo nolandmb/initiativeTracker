@@ -2,6 +2,19 @@ thead
     {
         font-weight: bold;
     }
+lable
+{
+    font-weight: bold;
+    padding-left: 10px;
+    margin-left: 10px;
+}
+
+.roundDiv
+{
+    display: block;
+    padding-left: 20px;
+    margin-left: 20px;
+}
 
 .myDiv
     {
@@ -38,4 +51,8 @@ thead
 button
 {
     padding-bottom: 10px;
+}
+
+.dropdown-backdrop {
+    position: static;
 }

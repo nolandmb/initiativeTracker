@@ -35,10 +35,10 @@
             var characterSelection = document.getElementById('combatants');
             var activeOption = characterSelection.options[characterSelection.selectedIndex].value;
             var characterAdded;
-
+            var i;
 
             //adds character name from the dropdown
-            for (var i =0; i < rowCount; i++){
+            for (i in characterSpecs){
                 if (characterSpecs[i][0] == activeOption){
                     intModifier = characterSpecs[i][1];
                     characterAdded = characterSpecs[i][0];
@@ -205,8 +205,9 @@
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
-            <div class="collapse navbar-collapse" id="navbar">
                     {% if session.user_id %}
+            <div class="collapse navbar-collapse" id="navbar">
+
                     <ul class="navbar-nav">
                         <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
                         <li class="nav-item"><a class="nav-link" href="/updateCharacter">Update Character</a></li>
@@ -218,8 +219,9 @@
                         <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
                         <li class="nav-item"><a class="nav-link" href="/login">Log In</a></li>
                     </ul>
-                    {% endif %}
+
             </div>
+            {% endif %}
         </nav>
 
 

@@ -1,29 +1,33 @@
-import psycopg2
 import os
+import mysql
 
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, flash, redirect, render_template, request, session, url_for
-from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
-from markupsafe import escape
 from extras import *
+from sqlalchemy import create_engine
+
 
 
 app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.urandom(24)
+
 app.config["DEBUG"] = True
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
     username="nolandmb",
     password="Neededapassword",
     hostname="nolandmb.mysql.pythonanywhere-services.com",
-    databasename="nolandmn$combat",
+    databasename="nolandmb$combat",
 )
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
-cur = db.cursor()
+engine = create_engine('postgresql://usr:pass@localhost:5432/sqlalchemy')
+
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -31,8 +35,6 @@ def login():
     # Log user in
     # Forget any user_id
     session.clear()
-    db = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cur = db.cursor()
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
@@ -45,7 +47,9 @@ def login():
             return error("must provide password")
 
         # Query database for username
-        rows = cur.execute("SELECT * FROM users WHERE user = ?", request.form.get("username"))
+        getName = request.form.get("username")
+        newResults = db.session.execute("SELECT * FROM users WHERE user = :getName", {'getName' :getName})
+        rows = newResults.fetchall()
         results = []
         for row in rows:
             results = row
@@ -54,12 +58,12 @@ def login():
         if results[1] != request.form.get("username") or not check_password_hash(results[2], request.form.get("password")):
             return error("invalid username and/or password")
 
-        cur.execute("SELECT id FROM users WHERE user = ?", request.form.get("username"))
-        getID = cur.fetchone()
-        userID = getID[0]
+        theUser = request.form.get("username")
+        getID = db.session.execute("SELECT id FROM users WHERE user = :theUser", {'theUser'  :theUser})
+        userID = getID.fetchone()
 
         # Remember which user has logged in
-        session["user_id"] = userID
+        session["user_id"] = userID[0]
 
         # Redirect user to home page
         return redirect("/")
@@ -80,8 +84,6 @@ def logout():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    db = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cur = db.cursor()
     # Register new user and handle errors
     if request.method == "POST":
         if not request.form.get("username"):
@@ -97,10 +99,8 @@ def register():
         checkUser = request.form["username"]
 
         # getting user names
-        user_names = []
         get_names = []
-        user_names = cur.execute("SELECT user FROM users")
-        get_names = cur.fetchall()
+        get_names = db.session.execute("SELECT user FROM users")
 
         # checking to see if user name already exist
         for name in get_names:
@@ -108,15 +108,15 @@ def register():
                 return error("username already used")
 
         # adding new user to the database
-        newUser = []
-        newUser = cur.execute("INSERT INTO users (user, hash) VALUES (?, ?)", (checkUser, passwordHash))
-        db.commit()
 
-        cur.execute("SELECT id FROM users WHERE user = ?", (checkUser,))
-        resault = cur.fetchone()
-        currentID = resault[0]
+        db.session.execute("INSERT INTO users (user, hash) VALUES (:checkUser, :passwordHash)", {'checkUser' :checkUser, 'passwordHash' :passwordHash})
+        db.session.commit()
+
+        resault = db.session.execute("SELECT id FROM users WHERE user = :checkUser", {'checkUser' :checkUser})
+        currentID = resault.fetchone()
+
         # keeping the user logged in for the session
-        session['user_id'] = currentID
+        session['user_id'] = currentID[0]
 
         return render_template("index.html")
 
@@ -126,18 +126,16 @@ def register():
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    db = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cur = db.cursor()
     GM = session['user_id']
 
     # pull the current users character list
-    cur.execute("SELECT name, initiative FROM characters WHERE GM_id = ?", (GM,))
-    results = cur.fetchall()
-    list(results)
+    results = db.session.execute("SELECT name, initiative FROM chracters WHERE GM_id = :GM", {'GM' :GM})
+    getResults = results.fetchall()
+    list(getResults)
     characters = []
     i = 0
-    for row in results:
-        characters.append({"name": results[i][0], "modifier": results[i][1]})
+    for row in getResults:
+        characters.append({"name": getResults[i][0], "modifier": getResults[i][1]})
         i += 1
 
     return render_template("index.html", characters=characters)
@@ -146,8 +144,6 @@ def index():
 @app.route("/addCharacter/", methods=["GET", "POST"])
 @login_required
 def addCharacter():
-    db = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cur = db.cursor()
 
     # log in and handles errors
     if request.method == "POST":
@@ -161,18 +157,20 @@ def addCharacter():
 
     character = request.form.get("characterName")
 
-    cur.execute("SELECT name, GM_id FROM characters WHERE name = ?", (character,))
-    resault = cur.fetchone()
-
-    if resault != None:
-        GM = resault[1]
-        if character == resault[0] and GM == session["user_id"]:
+    #check for ewxisting character in database
+    getResult = []
+    result = db.session.execute("SELECT name, GM_id FROM chracters WHERE name = :character", {'character' :character})
+    getResult = result.fetchone()
+    if getResult != None:
+        GM = getResult[1]
+        if character == getResult[0] and GM == session["user_id"]:
             return error("Character already exist")
     GM = session["user_id"]
 
+    #add new character to database
     newCharacter = []
-    newCharacter = cur.execute("INSERT INTO characters (name, initiative, GM_id) VALUES  (?, ?, ?)", (character, initiative, GM))
-    db.commit()
+    newCharacter = db.session.execute("INSERT INTO chracters (name, initiative, GM_id) VALUES  (:character, :initiative, :GM)", {'character' :character, 'initiative' :initiative, 'GM' :GM})
+    db.session.commit()
 
     return redirect("/updateCharacter")
 
@@ -180,8 +178,6 @@ def addCharacter():
 @app.route("/deleteCharacter", methods=["GET", "POST"])
 @login_required
 def deletecharacter():
-    db = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cur = db.cursor()
 
     # deletes charactrs from the data base
     if request.method == "POST":
@@ -189,16 +185,18 @@ def deletecharacter():
             return error("must enter character username")
 
     character = request.form.get("deleteName")
-
-    cur.execute("SELECT name, GM_id FROM characters WHERE name = ?", (character,))
-    checkCharacters = cur.fetchone()
-    getGM = checkCharacters[1]
-
-    if not checkCharacters:
+    character
+    checkChar =db.session.execute("SELECT name FROM chracters WHERE name = :character", {'character' :character})
+    checkCharacters = checkChar.fetchone()
+    checkCharacters = list(checkCharacters)
+    checked = db.session.execute("SELECT GM_id FROM chracters WHERE name = :character", {'character' :character})
+    getGM = checked.fetchone()
+    getGM = list(getGM)
+    if checkCharacters[0] != character:
         return error("Character not found")
-    if character == checkCharacters[0] and getGM == session["user_id"]:
-        cur.execute("DELETE FROM characters WHERE name = ?", (character,))
-        db.commit()
+    if character == checkCharacters[0] and getGM[0] == session["user_id"]:
+        db.session.execute("DELETE FROM chracters WHERE name = :character", {'character' :character})
+        db.session.commit()
     else:
         return error("Please enter a valid character")
     return render_template("updateCharacter.html")
@@ -207,21 +205,26 @@ def deletecharacter():
 @app.route("/modCharacter", methods=["GET", "POST"])
 @login_required
 def modcharacter():
-    db = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cur = db.cursor()
 
     # update characters modifier in the data base
     if request.method == "POST":
         if not request.form.get("modName"):
             return error("must enter character username")
-    character = request.form.get("modrName")
+    character = request.form.get("modName")
     if not request.form.get("changeMod"):
         return error("must enter a new modifier")
     else:
         initiative = request.form.get("changeMod")
-    if character == resault[0] and GM == session["user_id"]:
-        cur.execute("UPDATE characters SET initiative = ? WHERE name = ?", (initiative, character))
-        db.commit()
+
+    result = db.session.execute("SELECT name FROM chracters WHERE name = :character", {'character' : character,})
+    checkCharacters = result.fetchone()
+    checkCharacters = list(checkCharacters)
+    gmResult = db.session.execute("SELECT GM_id FROM chracters WHERE name = :character", {'character' : character,})
+    GM = gmResult.fetchone()
+    GM = list(GM)
+    if character == checkCharacters[0] and GM[0] == session["user_id"]:
+     db.session.execute("UPDATE chracters SET initiative = :initiative WHERE name = :character", {'initiative' : initiative, 'character' : character})
+
     else:
         return error("Character not avalible")
 
